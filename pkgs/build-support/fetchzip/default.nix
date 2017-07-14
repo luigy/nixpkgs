@@ -45,10 +45,10 @@ lib.overrideDerivation (fetchurl ({
       if [ -f "$unpackDir/$fn" ]; then
         mv "$unpackDir/$fn" "$out"
       else
-        mv "$unpackDir/$fn"/* "$out/"
+        $(cd "$unpackDir/$fn" && ls -1 | xargs mv -t "$out/")
       fi
     '' else ''
-      mv "$unpackDir"/* "$out/"
+      $(cd "$unpackDir" && ls -1 | xargs mv -t "$out/")
     '') #*/
     + extraPostFetch;
 } // removeAttrs args [ "stripRoot" "extraPostFetch" ]))
