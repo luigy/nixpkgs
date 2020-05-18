@@ -1,4 +1,4 @@
-{ lib, stdenv, fetchurl, unzip, autoreconfHook, libtool, makeWrapper, cups
+{ lib, stdenv, stdenv_32bit, fetchurl, unzip, autoreconfHook, libtool, makeWrapper, cups
 , ghostscript, pkgsi686Linux, zlib }:
 
 let
@@ -133,7 +133,7 @@ stdenv.mkDerivation {
     wrapProgram "$out/bin/c3pldrv" \
       --set PRELOAD_DEBUG 1 \
       --set LD_PRELOAD $preload32 \
-      --prefix LD_LIBRARY_PATH : "$out/lib32"
+      --prefix LD_LIBRARY_PATH : "$out/lib32:${stdenv_32bit.cc.cc.lib}/lib"
 
 
 
