@@ -4,13 +4,13 @@
 
 { lib, stdenv, pkgconfig, pango, perl, python2, python3, zip
 , libjpeg, zlib, dbus, dbus-glib, bzip2, xorg
-, freetype, fontconfig, file, nspr, nss, libnotify
+, freetype, fontconfig, file, nspr, nss_3_53, libnotify
 , yasm, libGLU, libGL, sqlite, unzip, makeWrapper
 , hunspell, libXdamage, libevent, libstartup_notification
 , libvpx_1_8
 , icu67, libpng, jemalloc, glib
 , autoconf213, which, gnused, cargo, rustc, llvmPackages
-, rust-cbindgen, nodejs, nasm, fetchpatch
+, rust-cbindgen, rust-cbindgen_0_15, nodejs, nasm, fetchpatch
 , gnum4
 , debugBuild ? false
 
@@ -93,7 +93,8 @@ let
             then "/Applications/${binaryNameCapitalized}.app/Contents/MacOS"
             else "/bin";
 
-  nss_pkg = if lib.versionAtLeast ffversion "82" then nss_latest else nss;
+  nss_pkg = if lib.versionAtLeast ffversion "82" then nss_latest else nss_3_53;
+  rust-cbindgen_pkg = if lib.versionAtLeast ffversion "83" then rust-cbindgen_0_15 else rust-cbindgen;
 in
 
 stdenv.mkDerivation ({
@@ -104,12 +105,33 @@ stdenv.mkDerivation ({
 
   patches = [
     ./env_var_for_system_dir.patch
-  ] ++ lib.optional pipewireSupport
+  ] ++
+  lib.optional (lib.versionOlder ffversion "83") ./no-buildconfig-ffx76.patch ++
+  lib.optional (lib.versionAtLeast ffversion "84") ./no-buildconfig-ffx84.patch ++
+
+  # there are two flavors of pipewire support
+  # The patches for the ESR release and the patches for the current stable
+  # release.
+  # Until firefox upstream stabilizes pipewire support we will have to continue
+  # tracking multiple versions here.
+  lib.optional (pipewireSupport && lib.versionOlder ffversion "83")
     (fetchpatch {
       # https://src.fedoraproject.org/rpms/firefox/blob/master/f/firefox-pipewire-0-3.patch
       url = "https://src.fedoraproject.org/rpms/firefox/raw/e99b683a352cf5b2c9ff198756859bae408b5d9d/f/firefox-pipewire-0-3.patch";
       sha256 = "0qc62di5823r7ly2lxkclzj9rhg2z7ms81igz44nv0fzv3dszdab";
     })
+    ++
+    # This picks pipewire patches from fedora that are part of https://bugzilla.mozilla.org/show_bug.cgi?id=1672944
+    lib.optionals (pipewireSupport && lib.versionAtLeast ffversion "83") (let
+      fedora_revision = "d6756537dd8cf4d9816dc63ada66ea026e0fd128";
+      mkPWPatch = spec: fetchpatch {
+        inherit (spec) name sha256;
+        url = "https://src.fedoraproject.org/rpms/firefox/raw/${fedora_revision}/f/${spec.name}";
+      };
+    in map mkPWPatch [
+        { name = "pw6.patch"; sha256 = "12lhx9wjpw0ahbfmw07wsx76bb223mr453q9cg8cq951vyskch3s"; }
+    ])
+
   ++ patches;
 
 
@@ -154,7 +176,7 @@ stdenv.mkDerivation ({
 
   postPatch = ''
     rm -rf obj-x86_64-pc-linux-gnu
-  '' + lib.optionalString pipewireSupport ''
+  '' + lib.optionalString (pipewireSupport && lib.versionOlder ffversion "83") ''
     # substitute the /usr/include/ lines for the libraries that pipewire provides.
     # The patch we pick from fedora only contains the generated moz.build files
     # which hardcode the dependency paths instead of running pkg_config.
@@ -182,7 +204,7 @@ stdenv.mkDerivation ({
       pkgconfig
       python2
       python3
-      rust-cbindgen
+      rust-cbindgen_pkg
       rustc
       which
     ]
@@ -310,6 +332,7 @@ stdenv.mkDerivation ({
     version = ffversion;
     isFirefox3Like = true;
     gtk = gtk2;
+    inherit alsaSupport;
     inherit nspr;
     inherit ffmpegSupport;
     inherit gssSupport;
@@ -331,4 +354,6 @@ stdenv.mkDerivation ({
 
   # on aarch64 this is also required
   dontUpdateAutotoolsGnuConfigScripts = true;
+
+  requiredSystemFeatures = [ "big-parallel" ];
 })

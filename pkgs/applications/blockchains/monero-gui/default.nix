@@ -4,6 +4,7 @@
 , qtbase, qtdeclarative, qtgraphicaleffects
 , qtmultimedia, qtxmlpatterns
 , qtquickcontrols, qtquickcontrols2
+, qtmacextras
 , monero, miniupnpc, unbound, readline
 , boost, libunwind, libsodium, pcsclite
 , randomx, zeromq, libgcrypt, libgpgerror
@@ -27,13 +28,13 @@ in
 
 stdenv.mkDerivation rec {
   pname = "monero-gui";
-  version = "0.17.1.0";
+  version = "0.17.1.7";
 
   src = fetchFromGitHub {
     owner  = "monero-project";
     repo   = "monero-gui";
     rev    = "v${version}";
-    sha256 = "07r78ipv4g3i6z822kq380vi3qwlb958rccsy6lyybkhj9y0rx84";
+    sha256 = "1dd2ddkxh9ynxnscysl46hj4dm063h1v13fnyah69am26qzzbby4";
   };
 
   nativeBuildInputs = [
@@ -49,7 +50,8 @@ stdenv.mkDerivation rec {
     randomx libgcrypt libgpgerror
     boost libunwind libsodium pcsclite
     zeromq hidapi rapidjson
-  ] ++ optionals trezorSupport [ libusb1 protobuf python3 ];
+  ] ++ optionals trezorSupport [ libusb1 protobuf python3 ]
+    ++ optionals stdenv.isDarwin [ qtmacextras ];
 
   postUnpack = ''
     # copy monero sources here
@@ -75,11 +77,7 @@ stdenv.mkDerivation rec {
                 'add_subdirectory(monero EXCLUDE_FROM_ALL)'
   '';
 
-  preConfigure = ''
-    # because $out needs to be expanded
-    cmakeFlagsArray+=("-DCMAKE_INSTALL_PREFIX=$out/bin")
-    cmakeFlagsArray+=("-DARCH=${arch}")
-  '';
+  cmakeFlags = [ "-DARCH=${arch}" ];
 
   desktopItem = makeDesktopItem {
     name = "monero-wallet-gui";
@@ -109,7 +107,6 @@ stdenv.mkDerivation rec {
     homepage     = "https://getmonero.org/";
     license      = licenses.bsd3;
     platforms    = platforms.all;
-    badPlatforms = platforms.darwin;
     maintainers  = with maintainers; [ rnhmjoj ];
   };
 }
