@@ -95,9 +95,7 @@ let
       BLK_CGROUP_IOCOST = whenAtLeast "5.4" yes;
       IOSCHED_DEADLINE = whenOlder "5.0" yes; # Removed in 5.0-RC1
       MQ_IOSCHED_DEADLINE = whenAtLeast "4.11" yes;
-      BFQ_GROUP_IOSCHED = whenAtLeast "4.12" yes;
       MQ_IOSCHED_KYBER = whenAtLeast "4.12" yes;
-      IOSCHED_BFQ = whenAtLeast "4.12" module;
     };
 
     # Enable NUMA.
@@ -416,7 +414,10 @@ let
       SECURITY_APPARMOR                = yes;
       DEFAULT_SECURITY_APPARMOR        = yes;
 
-      SECURITY_LOCKDOWN_LSM            = whenAtLeast "5.4" yes;
+      MODULE_SIG            = no; # r13y, generates a random key during build and bakes it in
+      # Depends on MODULE_SIG and only really helps when you sign your modules
+      # and enforce signatures which we don't do by default.
+      SECURITY_LOCKDOWN_LSM = option no;
     } // optionalAttrs (!stdenv.hostPlatform.isAarch32) {
 
       # Detect buffer overflows on the stack

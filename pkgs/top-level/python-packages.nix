@@ -1364,6 +1364,7 @@ in {
     cudatoolkit = pkgs.cudatoolkit_10_0;
     cudnn = pkgs.cudnn_cudatoolkit_10_0;
     nccl = pkgs.nccl_cudatoolkit_10;
+    cutensor = pkgs.cutensor_cudatoolkit_10;
   };
 
   curio = callPackage ../development/python-modules/curio { };
@@ -3569,6 +3570,8 @@ in {
     callPackage ../development/python-modules/markdown { }
   else
     callPackage ../development/python-modules/markdown/3_1.nix { };
+
+  markdown-it-py = callPackage ../development/python-modules/markdown-it-py { };
 
   markdown-macros = callPackage ../development/python-modules/markdown-macros { };
 

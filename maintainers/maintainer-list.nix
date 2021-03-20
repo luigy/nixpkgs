@@ -2763,6 +2763,12 @@
       fingerprint = "50B7 11F4 3DFD 2018 DCE6  E8D0 8A52 A140 BEBF 7D2C";
     }];
   };
+  fabianhjr = {
+    email = "fabianhjr@protonmail.com";
+    github = "fabianhjr";
+    githubId = 303897;
+    name = "Fabián Heredia Montiel";
+  };
   fadenb = {
     email = "tristan.helmich+nixos@gmail.com";
     github = "fadenb";
@@ -6221,6 +6227,12 @@
     githubId = 3359345;
     name = "obadz";
   };
+  obsidian-systems-maintenance = {
+    name = "Obsidian Systems Maintenance";
+    email = "maintainer@obsidian.systems";
+    github = "obsidian-systems-maintenance";
+    githubId = 80847921;
+  };
   ocharles = {
     email = "ollie@ocharles.org.uk";
     github = "ocharles";
@@ -6308,6 +6320,12 @@
     github = "osener";
     githubId = 111265;
     name = "Ozan Sener";
+  };
+  otavio = {
+    email = "otavio.salvador@ossystems.com.br";
+    github = "otavio";
+    githubId = 25278;
+    name = "Otavio Salvador";
   };
   otwieracz = {
     email = "slawek@otwiera.cz";
@@ -6702,6 +6720,12 @@
       longkeyid = "rsa4096/4F74D5361C4CA31E";
       fingerprint = "240B 57DE 4271 2480 7CE3  EAC8 4F74 D536 1C4C A31E";
     }];
+  };
+  preisschild = {
+    email = "florian@florianstroeger.com";
+    github = "Preisschild";
+    githubId = 11898437;
+    name = "Florian Ströger";
   };
   priegger = {
     email = "philipp@riegger.name";

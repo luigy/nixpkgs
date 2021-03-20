@@ -1,4 +1,4 @@
-{ lib, fetchurl, fetchFromGitHub, callPackage
+{ lib, fetchurl, fetchFromGitHub, fetchpatch, callPackage
 , storeDir ? "/nix/store"
 , stateDir ? "/nix/var"
 , confDir ? "/etc"
@@ -13,8 +13,8 @@ common =
   , bash, coreutils, gzip, gnutar
   , pkgconfig, boehmgc, perlPackages, libsodium, brotli, boost, editline, nlohmann_json
   , autoreconfHook, autoconf-archive, bison, flex
-  , jq, libarchive
-  , lowdown, mdbook
+  , jq, libarchive, libcpuid
+  , lowdown_0_8, mdbook
   # Used by tests
   , gmock
   , busybox-sandbox-shell
@@ -25,7 +25,7 @@ common =
   , withAWS ? !enableStatic && (stdenv.isLinux || stdenv.isDarwin), aws-sdk-cpp
   , enableStatic ? false
   , name, suffix ? "", src
-
+  , patches ? []
   }:
   let
      sh = busybox-sandbox-shell;
@@ -34,7 +34,6 @@ common =
       version = lib.getVersion name;
 
       is24 = lib.versionAtLeast version "2.4pre";
-      isExactly24 = lib.versionAtLeast version "2.4" && lib.versionOlder version "2.4";
 
       VERSION_SUFFIX = suffix;
 
@@ -46,7 +45,7 @@ common =
           [ autoreconfHook
             autoconf-archive
             bison flex
-            lowdown mdbook
+            lowdown_0_8 mdbook
             jq
            ];
 
@@ -55,7 +54,8 @@ common =
           brotli boost editline
         ]
         ++ lib.optional (stdenv.isLinux || stdenv.isDarwin) libsodium
-        ++ lib.optionals is24 [ libarchive gmock ]
+        ++ lib.optionals is24 [ libarchive gmock lowdown_0_8 ]
+        ++ lib.optional (is24 && stdenv.isx86_64) libcpuid
         ++ lib.optional withLibseccomp libseccomp
         ++ lib.optional withAWS
             ((aws-sdk-cpp.override {
@@ -94,9 +94,15 @@ common =
             patchelf --set-rpath $out/lib:${stdenv.cc.cc.lib}/lib $out/lib/libboost_thread.so.*
           ''}
         '' +
-        # For Nix 2.4, patch around an issue where the Nix configure step pulls in the
-        # build system's bash and other utilities when cross-compiling
-        lib.optionalString (stdenv.buildPlatform != stdenv.hostPlatform && isExactly24) ''
+        # On all versions before c9f51e87057652db0013289a95deffba495b35e7,
+        # released with 2.3.8, we need to patch around an issue where the Nix
+        # configure step pulls in the build system's bash and other utilities
+        # when cross-compiling.
+        lib.optionalString (
+          stdenv.buildPlatform != stdenv.hostPlatform &&
+          (lib.versionOlder "2.3.8" (lib.traceVal version) && !is24)
+          # The additional is24 condition is required as versionOlder doesn't understand nixUnstable version strings
+        ) ''
           mkdir tmp/
           substitute corepkgs/config.nix.in tmp/config.nix.in \
             --subst-var-by bash ${bash}/bin/bash \
@@ -189,10 +195,10 @@ in rec {
   nix = nixStable;
 
   nixStable = callPackage common (rec {
-    name = "nix-2.3.9";
+    name = "nix-2.3.10";
     src = fetchurl {
       url = "https://nixos.org/releases/nix/${name}/${name}.tar.xz";
-      sha256 = "72331fdba220517a0ccabcf5c9735703c31674bfb4ef0b64da5d8f715d6022fa";
+      sha256 = "a8a85e55de43d017abbf13036edfb58674ca136691582f17080c1cd12787b7ab";
     };
 
     inherit storeDir stateDir confDir boehmgc;
@@ -202,13 +208,13 @@ in rec {
 
   nixUnstable = lib.lowPrio (callPackage common rec {
     name = "nix-2.4${suffix}";
-    suffix = "pre20201201_5a6ddb3";
+    suffix = "pre20210308_1c0e3e4";
 
     src = fetchFromGitHub {
       owner = "NixOS";
       repo = "nix";
-      rev = "5a6ddb3de14a1684af6c793d663764d093fa7846";
-      sha256 = "0qhd3nxvqzszzsfvh89xhd239ycqb0kq2n0bzh9br78pcb60vj3g";
+      rev = "1c0e3e453d41b869e4ac7e25dc1c00c349a7c411";
+      sha256 = "17killwp42d25f17yq2jida64j7d0ipz6zish78iqi450yrd9wrd";
     };
 
     inherit storeDir stateDir confDir boehmgc;
