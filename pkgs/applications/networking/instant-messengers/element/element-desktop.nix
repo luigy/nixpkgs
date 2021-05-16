@@ -1,6 +1,6 @@
 { stdenv, fetchFromGitHub
 , makeWrapper, makeDesktopItem, mkYarnPackage
-, electron_9, element-web
+, electron_12, element-web
 }:
 # Notes for maintainers:
 # * versions of `element-web` and `element-desktop` should be kept in sync.
@@ -8,14 +8,14 @@
 
 let
   executableName = "element-desktop";
-  version = "1.7.23";
+  version = "1.7.27";
   src = fetchFromGitHub {
     owner = "vector-im";
     repo = "element-desktop";
     rev = "v${version}";
-    sha256 = "0vvjbh81h6sg6dbm9d6ffav0dim9sadvs67jcm702677qgigkc53";
+    sha256 = "0rgsc2cc1v6gjsklwvsjlqq9a8j9j80h9ac0jkvf9lhq33f3c57k";
   };
-  electron = electron_9;
+  electron = electron_12;
 
 in mkYarnPackage rec {
   name = "element-desktop-${version}";
@@ -74,6 +74,7 @@ in mkYarnPackage rec {
   meta = with stdenv.lib; {
     description = "A feature-rich client for Matrix.org";
     homepage = "https://element.io/";
+    changelog = "https://github.com/vector-im/element-desktop/blob/v${version}/CHANGELOG.md";
     license = licenses.asl20;
     maintainers = teams.matrix.members;
     inherit (electron.meta) platforms;
