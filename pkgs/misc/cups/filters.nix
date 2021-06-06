@@ -1,7 +1,7 @@
 { lib, stdenv, fetchurl, pkg-config, cups, poppler, poppler_utils, fontconfig
 , libjpeg, libpng, perl, ijs, qpdf, dbus, avahi
 , makeWrapper, coreutils, gnused, bc, gawk, gnugrep, which, ghostscript
-, mupdf, file
+, mupdf
 }:
 
 let
@@ -9,11 +9,11 @@ let
 
 in stdenv.mkDerivation rec {
   pname = "cups-filters";
-  version = "1.27.4";
+  version = "1.25.12";
 
   src = fetchurl {
     url = "https://openprinting.org/download/cups-filters/${pname}-${version}.tar.xz";
-    sha256 = "110b1xhb5vfpcx0zq9kkas7pj281skx5dpnnr22idx509jfdzj8b";
+    sha256 = "1kv25011iyzvd33n5zmmn1z2p6pzk26hmmw6qvjjnx8p3sp7raqn";
   };
 
   nativeBuildInputs = [ pkg-config makeWrapper ];
@@ -33,16 +33,10 @@ in stdenv.mkDerivation rec {
     "--enable-imagefilters"
     "--with-rcdir=no"
     "--with-shell=${stdenv.shell}"
-    "--with-test-font-path=/dev/null"
+    "--with-test-font-path=/path-does-not-exist"
   ];
 
   makeFlags = [ "CUPS_SERVERBIN=$(out)/lib/cups" "CUPS_DATADIR=$(out)/share/cups" "CUPS_SERVERROOT=$(out)/etc/cups" ];
-
-  patchPhase =
-    ''
-      substituteInPlace configure --replace "/usr/bin/file" "${file}/bin/file"
-      substituteInPlace ltmain.sh --replace "/usr/bin/file" "${file}/bin/file"
-    '';
 
   postConfigure =
     ''
